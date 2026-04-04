@@ -4,9 +4,7 @@ import auto from '../photo/tuktuk.png'
 import motorcycle from '../photo/motorbike.png'
 
 const vehicleImages = {
-  car:car,
-  auto:auto,
-  motorcycle:motorcycle,
+   car,auto,motorcycle
 };
 
 const ConfirmRide = ({
