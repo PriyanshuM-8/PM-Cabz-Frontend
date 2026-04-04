@@ -3,11 +3,14 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { UserDataContext } from "../context/userContext";
 import logo from "../photo/logo.png";
+import hatchback from "../photo/hatchback.png";
+import tuktuk from "../photo/tuktuk.png";
+import motorbike from "../photo/motorbike.png";
 
 const vehicleImages = {
-  car: "/src/photo/hatchback.png",
-  auto: "/src/photo/tuktuk.png",
-  motorcycle: "/src/photo/motorbike.png",
+  car: hatchback,
+  auto: tuktuk,
+  motorcycle: motorbike,
 };
 
 const vehicleLabels = {
