@@ -41,7 +41,15 @@ const ConfirmRide = ({
 
       {/* TITLE */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-bold">Confirm Ride 🚖</h3>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { setConfirmRidePanel(false); setVehiclePanel(true); }}
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
+          >
+            <i className="ri-arrow-left-line text-white text-sm"></i>
+          </button>
+          <h3 className="text-xl font-bold">Confirm Ride 🚖</h3>
+        </div>
         <button
           onClick={handleDismiss}
           className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
