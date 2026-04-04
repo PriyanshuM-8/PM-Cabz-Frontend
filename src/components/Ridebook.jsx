@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useContext } from "react";
 import axios from "axios";
 import "remixicon/fonts/remixicon.css";
 import { SocketContext } from "../context/SocketContext";
-import { UserDataContext } from "../context/UserContext";
+import { UserDataContext } from "../context/userContext";
 import { useNavigate } from "react-router-dom";
 import LocationSearchPanel from "../components/LocationSearchPanel";
 import { Bounce, toast, ToastContainer } from "react-toastify";
