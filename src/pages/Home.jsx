@@ -17,20 +17,18 @@ const Home = () => {
   const { socket } = useContext(SocketContext);
   const { user } = useContext(UserDataContext);
 
-  const stateData = location.state || JSON.parse(localStorage.getItem("rideData") || "{}");
+  const stateData = location.state || {};
 
   const [pickup, setPickup] = useState(stateData?.pickup || "");
   const [destination, setDestination] = useState(stateData?.destination || "");
   const [fare, setFare] = useState(stateData?.fare || {});
-  const [vehicleType, setVehicleType] = useState(stateData?.vehicleType || null);
+  const [vehicleType, setVehicleType] = useState(null); // always start null — user must select
 
-  // agar vehicleType already selected hai (/book se aaye) toh seedha confirmRide dikhao
+  // show vehicle panel if pickup+destination+fare present but no vehicleType selected yet
   const [vehiclePanel, setVehiclePanel] = useState(
-    !!(stateData?.pickup && stateData?.destination && stateData?.fare && !stateData?.vehicleType)
+    !!(stateData?.pickup && stateData?.destination && stateData?.fare)
   );
-  const [confirmRidePanel, setConfirmRidePanel] = useState(
-    !!(stateData?.pickup && stateData?.destination && stateData?.vehicleType)
-  );
+  const [confirmRidePanel, setConfirmRidePanel] = useState(false); // always start closed
   const [confirmRideDismissed, setConfirmRideDismissed] = useState(false);
   const [searchingDriver, setSearchingDriver] = useState(false);
   const [driverFound, setDriverFound] = useState(false);
