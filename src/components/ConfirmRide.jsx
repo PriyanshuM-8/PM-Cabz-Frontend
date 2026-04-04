@@ -1,9 +1,12 @@
 import { useState } from "react";
+import car from '../photo/hatchback.png'
+import auto from '../photo/tuktuk.png'
+import motorcycle from '../photo/motorbike.png'
 
 const vehicleImages = {
-  car: "src/photo/hatchback.png",
-  auto: "src/photo/tuktuk.png",
-  motorcycle: "src/photo/motorbike.png",
+  car:car,
+  auto:auto,
+  motorcycle:motorcycle,
 };
 
 const ConfirmRide = ({
