@@ -20,7 +20,7 @@ const WaitingForDriver = ({ ride }) => {
           <div className="flex items-center gap-3">
             {captain?.profilePic ? (
               <img
-                src={`${VITE_BASE_URL}/${captain.profilePic}`}
+                src={captain.profilePic}
                 alt="Captain"
                 className="w-14 h-14 rounded-full object-cover border-2 border-amber-500"
               />

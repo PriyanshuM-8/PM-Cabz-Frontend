@@ -122,11 +122,21 @@ export default function CaptainHome() {
         }
         return p;
       });
+    const onCancelled = ({ rideId }) =>
+      setRide((p) => {
+        if (p?._id?.toString() === rideId?.toString()) {
+          setShowNotif(false);
+          return null;
+        }
+        return p;
+      });
     socket.on("new-ride", onNew);
     socket.on("ride-accepted", onTaken);
+    socket.on("ride-cancelled", onCancelled);
     return () => {
       socket.off("new-ride", onNew);
       socket.off("ride-accepted", onTaken);
+      socket.off("ride-cancelled", onCancelled);
     };
   }, [socket]);
 

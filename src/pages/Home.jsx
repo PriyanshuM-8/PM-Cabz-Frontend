@@ -278,7 +278,19 @@ const Home = () => {
           </div>
 
           <button
-            onClick={() => { setSearchingDriver(false); setVehiclePanel(true); }}
+            onClick={async () => {
+              setSearchingDriver(false);
+              setVehiclePanel(true);
+              if (ride?._id) {
+                try {
+                  await axios.post(
+                    `${import.meta.env.VITE_BASE_URL}/rides/cancel`,
+                    { rideId: ride._id },
+                    { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+                  );
+                } catch (_) {}
+              }
+            }}
             className="text-sm text-gray-500 hover:text-gray-300 underline transition"
           >
             Cancel Search
@@ -307,7 +319,7 @@ const Home = () => {
             {/* CAPTAIN MINI CARD */}
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3 mb-4">
               {ride.captain?.profilePic ? (
-                <img src={`${import.meta.env.VITE_BASE_URL}/${ride.captain.profilePic}`}
+                <img src={ride.captain.profilePic}
                   className="w-12 h-12 rounded-xl object-cover border-2 border-amber-500/50" alt="captain" />
               ) : (
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-lg font-black text-white">

@@ -101,7 +101,7 @@ const Riding = () => {
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full bg-green-400 mt-1.5 flex-shrink-0" />
                 <p className="text-gray-300 text-sm leading-tight">{rideData?.pickup}</p>
-              </div>
+              </div> 
               <div className="w-0.5 h-4 bg-gradient-to-b from-green-400/30 to-red-400/30 ml-[3px]" />
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 flex-shrink-0" />
@@ -186,7 +186,7 @@ const Riding = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {captain?.profilePic ? (
-                <img src={`${BASE}/${captain.profilePic}`} alt="Captain"
+                <img src={captain.profilePic} alt="Captain"
                   className="w-14 h-14 rounded-2xl object-cover border-2 border-amber-500/50" />
               ) : (
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-xl font-black text-white">
