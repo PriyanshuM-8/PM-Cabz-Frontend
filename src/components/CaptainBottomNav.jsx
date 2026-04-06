@@ -281,7 +281,7 @@ export function ProfileTab({ captain, isOnline, walletBal, onLogout }) {
       <div className="flex items-center gap-3 bg-white/4 border border-white/8 rounded-2xl px-4 py-3">
         {captain?.profilePic ? (
           <img
-            src={`${BASE}/${captain.profilePic}`}
+            src={captain.profilePic}
             className="w-14 h-14 rounded-2xl object-cover ring-2 ring-amber-500/30"
             alt=""
           />

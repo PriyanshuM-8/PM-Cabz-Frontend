@@ -106,12 +106,16 @@ const CaptainSignup = () => {
       const res = await axios.post(`${import.meta.env.VITE_BASE_URL}/captains/register`, formData);
       setCaptain(res.data.captain);
       localStorage.setItem("captain-token", res.data.token);
+      // console.log(res);
       navigate("/captain-home");
+      
     } catch (err) {
-      setError(err.response?.data?.message || err.response?.data?.error || "Signup failed.");
+      console.error("Signup error full:", err.response?.data);
+      setError(err.response?.data?.message || err.response?.data?.error || JSON.stringify(err.response?.data) || "Signup failed.");
     } finally {
       setLoading(false);
     }
+    
   };
 
   return (

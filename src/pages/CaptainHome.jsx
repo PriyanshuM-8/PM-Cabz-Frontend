@@ -226,7 +226,7 @@ export default function CaptainHome() {
           <div className="flex items-center gap-2.5 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl px-3 py-2 shadow-2xl">
             {captain?.profilePic ? (
               <img
-                src={`${BASE}/${captain.profilePic}`}
+                src={captain.profilePic}
                 className="w-9 h-9 rounded-xl object-cover ring-1 ring-white/20"
                 alt=""
               />
