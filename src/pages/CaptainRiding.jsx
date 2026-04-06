@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import { SocketContext } from '../context/SocketContext';
 import { CaptainDataContext } from '../context/CaptainContext';
 import L from 'leaflet';
@@ -9,7 +9,7 @@ import 'leaflet/dist/leaflet.css';
 
 const captainIcon = new L.Icon({
   iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
-  iconSize: [40, 40],
+  iconSize: [48, 48], iconAnchor: [24, 48],
 });
 
 function RecenterMap({ position }) {
@@ -18,209 +18,151 @@ function RecenterMap({ position }) {
   return null;
 }
 
-const authHeader = () => ({
-  headers: { Authorization: `Bearer ${localStorage.getItem('captain-token')}` },
-});
+const auth = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('captain-token')}` } });
 
-const CaptainRiding = () => {
+export default function CaptainRiding() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { socket } = useContext(SocketContext) || {};
+  const navigate  = useNavigate();
+  const { socket }              = useContext(SocketContext) || {};
   const { captain, setCaptain } = useContext(CaptainDataContext) || {};
 
   const rideData = location.state?.ride;
 
-  const [otp, setOtp] = useState('');
-  const [otpError, setOtpError] = useState('');
-  const [startLoading, setStartLoading] = useState(false);
-  const [rideStarted, setRideStarted] = useState(false);
-  const [endLoading, setEndLoading] = useState(false);
-  const [captainPos, setCaptainPos] = useState(null);
-  const [rideComplete, setRideComplete] = useState(false);
-  const [completedRideData, setCompletedRideData] = useState(null);
-  const [captainStats, setCaptainStats] = useState(null);
-  const [rating, setRating] = useState(0);
+  const [otp,           setOtp]           = useState('');
+  const [otpError,      setOtpError]      = useState('');
+  const [startLoading,  setStartLoading]  = useState(false);
+  const [rideStarted,   setRideStarted]   = useState(false);
+  const [endLoading,    setEndLoading]    = useState(false);
+  const [captainPos,    setCaptainPos]    = useState(null);
+  const [rideComplete,  setRideComplete]  = useState(false);
+  const [doneData,      setDoneData]      = useState(null);
+  const [stats,         setStats]         = useState(null);
+  const [rating,        setRating]        = useState(0);
 
-  // ── LIVE LOCATION ──
+  // LIVE LOCATION
   useEffect(() => {
     if (!socket || !captain?._id || !rideData?._id) return;
     socket.emit('join-ride', { rideId: rideData._id });
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    const id = navigator.geolocation.watchPosition(
+      p => {
+        const loc = { lat: p.coords.latitude, lng: p.coords.longitude };
         setCaptainPos([loc.lat, loc.lng]);
-        socket.emit('update-location-captain', {
-          userId: captain._id,
-          rideId: rideData._id,
-          location: loc,
-        });
+        socket.emit('update-location-captain', { userId: captain._id, rideId: rideData._id, location: loc });
       },
-      (err) => console.warn('Location error:', err.message),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      () => {}, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-    return () => navigator.geolocation.clearWatch(watchId);
+    return () => navigator.geolocation.clearWatch(id);
   }, [socket, captain?._id, rideData?._id]);
 
   const startRide = async () => {
-    if (!otp || otp.length !== 4) { setOtpError('Enter 4-digit OTP'); return; }
-    setOtpError('');
-    setStartLoading(true);
+    if (otp.length !== 4) { setOtpError('Enter 4-digit OTP'); return; }
+    setOtpError(''); setStartLoading(true);
     try {
-      await axios.get(
-        `${import.meta.env.VITE_BASE_URL}/rides/start-ride`,
-        { params: { rideId: rideData?._id, otp }, ...authHeader() }
-      );
+      await axios.get(`${import.meta.env.VITE_BASE_URL}/rides/start-ride`, { params: { rideId: rideData?._id, otp }, ...auth() });
       setRideStarted(true);
-    } catch (err) {
-      setOtpError(err.response?.data?.message || 'Invalid OTP');
-    } finally {
-      setStartLoading(false);
-    }
+    } catch (e) { setOtpError(e.response?.data?.message || 'Invalid OTP'); }
+    finally { setStartLoading(false); }
   };
 
   const endRide = async () => {
     setEndLoading(true);
     try {
-      await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/rides/end-ride`,
-        { rideId: rideData?._id },
-        authHeader()
-      );
-
-      // fetch updated captain stats
+      await axios.post(`${import.meta.env.VITE_BASE_URL}/rides/end-ride`, { rideId: rideData?._id }, auth());
       try {
-        const profileRes = await axios.get(
-          `${import.meta.env.VITE_BASE_URL}/captains/profile`,
-          authHeader()
-        );
-        const updatedCaptain = profileRes.data.captain;
-        setCaptainStats(updatedCaptain);
-        if (setCaptain) setCaptain(updatedCaptain);
+        const r = await axios.get(`${import.meta.env.VITE_BASE_URL}/captains/profile`, auth());
+        setStats(r.data.captain); if (setCaptain) setCaptain(r.data.captain);
       } catch (_) {}
-
-      setCompletedRideData(rideData);
-      setRideComplete(true);
-    } catch (err) {
-      console.error('End ride error:', err.response?.data?.message || err.message);
-    } finally {
-      setEndLoading(false);
-    }
+      setDoneData(rideData); setRideComplete(true);
+    } catch (e) { console.error(e); }
+    finally { setEndLoading(false); }
   };
 
-  // ── RIDE COMPLETE SCREEN ──
-  if (rideComplete && completedRideData) {
-    const totalRides = captainStats?.totalRides ?? (captain?.totalRides ?? 0);
-    const earnings = captainStats?.earnings ?? (captain?.earnings ?? 0);
-    const walletBalance = captainStats?.wallet?.balance ?? (captain?.wallet?.balance ?? 0);
+  // ── RIDE COMPLETE ──
+  if (rideComplete && doneData) {
+    const totalRides = stats?.totalRides ?? captain?.totalRides ?? 0;
+    const earnings   = stats?.earnings   ?? captain?.earnings   ?? 0;
+    const wallet     = stats?.wallet?.balance ?? captain?.wallet?.balance ?? 0;
+    const commission = Math.round((doneData?.fare || 0) * 0.1);
+    const net        = (doneData?.fare || 0) - commission;
 
     return (
-      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center px-5 relative overflow-hidden">
-        {/* BG GLOW */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-80 bg-green-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-60 h-60 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: "linear-gradient(135deg, #0f0c29 0%, #1a1a2e 40%, #16213e 70%, #0f3460 100%)" }}>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-green-500/8 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 w-full max-w-sm">
+        <div className="flex-1 flex flex-col items-center justify-center px-5 py-10 relative z-10 max-w-sm mx-auto w-full">
 
-          {/* SUCCESS ICON */}
+          {/* ICON */}
           <div className="relative w-24 h-24 mx-auto mb-5">
-            <div className="absolute inset-0 rounded-full bg-green-500/15 animate-ping" />
-            <div className="absolute inset-2 rounded-full bg-green-500/20 border-2 border-green-500/40 flex items-center justify-center text-4xl">
-              🏁
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/40">
-              <i className="ri-check-line text-white text-sm font-bold"></i>
+            <div className="absolute inset-0 rounded-full bg-green-500/20 animate-ping" />
+            <div className="absolute inset-2 rounded-full bg-green-500/15 border-2 border-green-500/40 flex items-center justify-center">
+              <i className="ri-checkbox-circle-fill text-green-400 text-4xl"></i>
             </div>
           </div>
 
-          <h1 className="text-3xl font-black text-white text-center mb-1">Ride Complete!</h1>
-          <p className="text-gray-400 text-sm text-center mb-6">Great job! Keep it up 🚀</p>
+          <h1 className="text-white text-3xl font-black mb-1 text-center">Trip Completed!</h1>
+          <p className="text-gray-400 text-sm mb-6 text-center">Great job, keep it up 🚀</p>
 
-          {/* RIDE SUMMARY CARD */}
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-5 mb-4">
-            <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-4">Ride Summary</p>
-
-            {/* PASSENGER */}
-            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
-              <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center font-black text-white text-base">
-                {completedRideData?.user?.fullname?.[0]?.toUpperCase() || 'U'}
+          {/* EARNINGS */}
+          <div className="w-full bg-gradient-to-br from-green-500/15 to-emerald-500/8 border border-green-500/25 rounded-3xl p-5 mb-4">
+            <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Trip Earnings</p>
+            <div className="space-y-2.5">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-300 text-sm">Trip Fare</span>
+                <span className="text-white font-black text-lg">₹{doneData?.fare}</span>
               </div>
-              <div>
-                <p className="text-white font-semibold text-sm">{completedRideData?.user?.fullname || 'Passenger'}</p>
-                <p className="text-gray-500 text-xs">{completedRideData?.user?.mobile || ''}</p>
+              <div className="flex justify-between items-center pb-2.5 border-b border-white/10">
+                <span className="text-gray-400 text-sm">Platform Fee (10%)</span>
+                <span className="text-red-400 font-bold text-sm">−₹{commission}</span>
               </div>
-              <div className="ml-auto text-right">
-                <p className="text-amber-400 font-black text-2xl">₹{completedRideData?.fare}</p>
-                <p className="text-gray-500 text-xs">Cash</p>
-              </div>
-            </div>
-
-            {/* ROUTE */}
-            <div className="space-y-2 mb-4 pb-4 border-b border-white/10">
-              <div className="flex items-start gap-2.5">
-                <div className="w-2 h-2 rounded-full bg-green-400 mt-1.5 flex-shrink-0 shadow-[0_0_4px_#4ade80]" />
-                <p className="text-gray-300 text-xs leading-relaxed">{completedRideData?.pickup}</p>
-              </div>
-              <div className="w-0.5 h-3 bg-gradient-to-b from-green-400/30 to-red-400/30 ml-[3px]" />
-              <div className="flex items-start gap-2.5">
-                <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 flex-shrink-0 shadow-[0_0_4px_#f87171]" />
-                <p className="text-gray-300 text-xs leading-relaxed">{completedRideData?.destination}</p>
-              </div>
-            </div>
-
-            {/* VEHICLE */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <i className="ri-car-line text-amber-400 text-sm"></i>
-                <span className="text-gray-400 text-xs">{completedRideData?.vehicleType || captain?.vehicle?.vehicleType || 'Vehicle'}</span>
-              </div>
-              <div className="bg-white/10 border border-white/20 rounded-lg px-2.5 py-1">
-                <p className="text-white font-black text-xs tracking-widest">{captain?.vehicle?.plate || '----'}</p>
+              <div className="flex justify-between items-center pt-0.5">
+                <span className="text-white font-bold">Your Earnings</span>
+                <span className="text-green-400 font-black text-2xl">₹{net}</span>
               </div>
             </div>
           </div>
 
-          {/* STATS GRID */}
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-3 text-center">
-              <i className="ri-roadster-line text-amber-400 text-xl mb-1 block"></i>
-              <p className="text-white font-black text-lg leading-tight">{totalRides}</p>
-              <p className="text-gray-500 text-xs">Total Rides</p>
+          {/* ROUTE */}
+          <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 mb-4">
+            <div className="flex items-start gap-3 mb-2">
+              <div className="w-2 h-2 rounded-full bg-green-400 mt-1.5 flex-shrink-0 shadow-[0_0_4px_#4ade80]" />
+              <p className="text-gray-300 text-xs leading-relaxed">{doneData?.pickup}</p>
             </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-3 text-center">
-              <i className="ri-money-rupee-circle-line text-green-400 text-xl mb-1 block"></i>
-              <p className="text-white font-black text-lg leading-tight">₹{earnings}</p>
-              <p className="text-gray-500 text-xs">Earnings</p>
+            <div className="w-0.5 h-3 bg-gray-700 ml-[3px] mb-2" />
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 flex-shrink-0 shadow-[0_0_4px_#f87171]" />
+              <p className="text-gray-300 text-xs leading-relaxed">{doneData?.destination}</p>
             </div>
-            <div className="bg-violet-500/10 border border-violet-500/20 rounded-2xl p-3 text-center">
-              <i className="ri-wallet-3-fill text-violet-400 text-xl mb-1 block"></i>
-              <p className="text-violet-300 font-black text-lg leading-tight">₹{walletBalance}</p>
-              <p className="text-gray-500 text-xs">Wallet</p>
-            </div>
+          </div>
+
+          {/* STATS */}
+          <div className="w-full grid grid-cols-3 gap-3 mb-4">
+            {[
+              { icon: "ri-roadster-line",           val: totalRides,    label: "Rides",    c: "text-amber-400"  },
+              { icon: "ri-money-rupee-circle-line", val: `₹${earnings}`, label: "Earnings", c: "text-green-400"  },
+              { icon: "ri-wallet-3-fill",           val: `₹${wallet}`,  label: "Wallet",   c: "text-violet-400" },
+            ].map(s => (
+              <div key={s.label} className="bg-white/5 border border-white/10 rounded-2xl p-3 text-center">
+                <i className={`${s.icon} ${s.c} text-xl mb-1 block`}></i>
+                <p className="text-white font-black text-sm">{s.val}</p>
+                <p className="text-gray-500 text-xs">{s.label}</p>
+              </div>
+            ))}
           </div>
 
           {/* RATING */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-5">
-            <p className="text-gray-400 text-xs text-center mb-3">How was this ride?</p>
+          <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 mb-5">
+            <p className="text-gray-400 text-xs text-center mb-3">Rate this trip</p>
             <div className="flex justify-center gap-3">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setRating(s)}
-                  className={`text-3xl transition active:scale-90 ${s <= rating ? 'scale-110' : 'opacity-40'}`}
-                >
-                  ⭐
-                </button>
+              {[1,2,3,4,5].map(s => (
+                <button key={s} onClick={() => setRating(s)}
+                  className={`text-3xl transition active:scale-90 ${s <= rating ? "scale-110" : "opacity-25"}`}>⭐</button>
               ))}
             </div>
           </div>
 
-          {/* GO HOME BUTTON */}
-          <button
-            onClick={() => navigate('/captain-home')}
-            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black py-4 rounded-2xl transition active:scale-95 shadow-xl shadow-amber-500/25 text-base flex items-center justify-center gap-2"
-          >
-            <i className="ri-home-line text-lg"></i>
-            Back to Dashboard
+          <button onClick={() => navigate('/captain-home')}
+            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black py-4 rounded-2xl transition active:scale-95 shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2 text-base">
+            <i className="ri-home-line text-lg"></i>Back to Dashboard
           </button>
         </div>
       </div>
@@ -229,129 +171,149 @@ const CaptainRiding = () => {
 
   if (!rideData) {
     return (
-      <div className="h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-center text-white">
-          <p className="text-gray-400 mb-4">No ride data found</p>
-          <button onClick={() => navigate('/captain-home')} className="bg-amber-500 px-6 py-2 rounded-xl font-semibold">Go to Dashboard</button>
+      <div className="h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0f0c29 0%, #1a1a2e 50%, #16213e 100%)" }}>
+        <div className="text-center">
+          <p className="text-gray-400 mb-4">No ride data</p>
+          <button onClick={() => navigate('/captain-home')} className="bg-amber-500 text-white px-6 py-2 rounded-xl font-semibold">Dashboard</button>
         </div>
       </div>
     );
   }
 
+  const mapCenter = captainPos || [28.6139, 77.2090];
+
   return (
-    <div className="h-screen relative flex flex-col bg-zinc-950">
+    <div className="h-screen flex flex-col bg-slate-950 relative overflow-hidden">
 
-      {/* MAP */}
-      <div className="flex-1 relative overflow-hidden">
-        {captainPos ? (
-          <MapContainer center={captainPos} zoom={15} className="h-full w-full" style={{ height: '100%' }}>
-            <TileLayer attribution="© OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            <Marker position={captainPos} icon={captainIcon} />
-            <RecenterMap position={captainPos} />
-          </MapContainer>
-        ) : (
-          <div className="h-full flex items-center justify-center bg-zinc-900">
-            <p className="text-gray-400 text-sm">Getting location... </p>
+      {/* ── MAP — ALWAYS VISIBLE ── */}
+      <div className="absolute inset-0 z-0">
+        <MapContainer center={mapCenter} zoom={15} className="h-full w-full" style={{ height: '100%' }} zoomControl={false}>
+          <TileLayer attribution="© OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          {captainPos && <Marker position={captainPos} icon={captainIcon} />}
+          {captainPos && <RecenterMap position={captainPos} />}
+        </MapContainer>
+
+        {/* MAP GRADIENT */}
+        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/70 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-72 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+      </div>
+
+      {/* ── TOP OVERLAY ── */}
+      <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-10 sm:pt-12">
+        <div className="flex items-center justify-between max-w-lg mx-auto">
+          {/* LIVE */}
+          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-2xl border border-green-500/30 px-3 py-1.5 rounded-full shadow-lg">
+            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_6px_#4ade80]" />
+            <span className="text-green-400 text-xs font-bold">LIVE</span>
           </div>
-        )}
 
-        <button
-          onClick={() => navigate('/captain-home')}
-          className="absolute top-4 right-4 z-20 w-10 h-10 bg-zinc-900/90 border border-white/10 rounded-full flex items-center justify-center"
-        >
-          <i className="ri-home-line text-white"></i>
-        </button>
+          {/* STATUS */}
+          <div className="bg-black/60 backdrop-blur-2xl border border-white/10 px-4 py-1.5 rounded-full shadow-lg">
+            <p className="text-white text-xs font-semibold">
+              {rideStarted ? "🚗 Ride in progress" : "🚕 Picking up passenger"}
+            </p>
+          </div>
 
-        <div className="absolute top-4 left-4 z-20 bg-green-500/90 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-white animate-pulse"></div>
-          <span className="text-white text-xs font-semibold">LIVE</span>
+          {/* HOME */}
+          <button onClick={() => navigate('/captain-home')}
+            className="w-10 h-10 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl flex items-center justify-center shadow-lg">
+            <i className="ri-home-line text-white text-base"></i>
+          </button>
         </div>
       </div>
 
-      {/* BOTTOM PANEL */}
-      <div className="bg-zinc-900 border-t border-white/10 px-5 py-5">
-
-        {/* PASSENGER INFO */}
-        <div className="flex items-center justify-between mb-4">
+      {/* ── PASSENGER CARD — MAP OVERLAY ── */}
+      <div className="absolute top-24 sm:top-28 left-4 right-4 z-20 max-w-lg mx-auto">
+        <div className="bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl px-4 py-3 shadow-2xl flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-amber-500 flex items-center justify-center font-bold text-white text-lg">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center font-black text-white text-base shadow-lg shadow-amber-500/20">
               {rideData?.user?.fullname?.[0]?.toUpperCase() || 'U'}
             </div>
             <div>
-              <p className="text-white font-semibold text-sm">{rideData?.user?.fullname || 'Passenger'}</p>
+              <p className="text-white font-bold text-sm">{rideData?.user?.fullname || 'Passenger'}</p>
               {rideData?.user?.mobile && (
-                <a href={`tel:${rideData.user.mobile}`} className="flex items-center gap-1 text-green-400 text-xs font-semibold mt-0.5">
-                  <i className="ri-phone-fill text-xs"></i>
-                  {rideData.user.mobile}
+                <a href={`tel:${rideData.user.mobile}`} className="flex items-center gap-1 text-green-400 text-xs font-semibold">
+                  <i className="ri-phone-fill text-xs"></i>{rideData.user.mobile}
                 </a>
               )}
             </div>
           </div>
           <div className="text-right">
-            <p className="text-amber-400 font-bold text-xl">₹{rideData?.fare}</p>
-            <p className="text-gray-500 text-xs">Cash</p>
+            <p className="text-amber-400 font-black text-xl">₹{rideData?.fare}</p>
+            <p className="text-gray-400 text-xs">Cash</p>
           </div>
         </div>
+      </div>
 
-        {/* ROUTE */}
-        <div className="bg-white/5 rounded-2xl p-3 border border-white/10 mb-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0"></div>
-            <p className="text-gray-300 text-sm truncate">{rideData?.pickup}</p>
+      {/* ── BOTTOM SHEET ── */}
+      <div className="absolute bottom-0 left-0 right-0 z-20">
+        <div className="bg-slate-900/98 backdrop-blur-3xl rounded-t-[2rem] border-t border-indigo-500/10 shadow-2xl max-w-lg mx-auto">
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 bg-white/15 rounded-full" />
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0"></div>
-            <p className="text-gray-300 text-sm truncate">{rideData?.destination}</p>
+
+          <div className="px-5 pb-8 pt-2 space-y-3">
+
+            {/* ROUTE */}
+            <div className="bg-white/4 border border-white/8 rounded-2xl p-3.5">
+              <div className="flex items-start gap-3">
+                <div className="flex flex-col items-center gap-1 mt-0.5 flex-shrink-0">
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-400 shadow-[0_0_6px_#4ade80]" />
+                  <div className="w-0.5 h-5 bg-gradient-to-b from-green-400/40 to-red-400/40" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400 shadow-[0_0_6px_#f87171]" />
+                </div>
+                <div className="flex-1 space-y-2.5">
+                  <div>
+                    <p className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider">Pickup</p>
+                    <p className="text-white text-sm font-medium leading-tight truncate">{rideData?.pickup}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider">Drop</p>
+                    <p className="text-white text-sm font-medium leading-tight truncate">{rideData?.destination}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* OTP */}
+            {!rideStarted && (
+              <div>
+                <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-2">Ask passenger for OTP</p>
+                <div className="flex gap-3">
+                  <input type="tel" maxLength={4} value={otp}
+                    onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+                    placeholder="• • • •"
+                    className="flex-1 bg-white/6 border border-white/10 focus:border-amber-500/60 rounded-2xl px-4 py-3.5 text-white text-center text-2xl font-black tracking-[0.5em] outline-none transition"
+                  />
+                  <button onClick={startRide} disabled={startLoading || otp.length !== 4}
+                    className="bg-gradient-to-r from-amber-500 to-orange-500 disabled:opacity-50 text-white font-black px-6 rounded-2xl transition active:scale-95 flex items-center gap-2 shadow-lg shadow-amber-500/20">
+                    {startLoading
+                      ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      : <><i className="ri-play-fill"></i>Start</>}
+                  </button>
+                </div>
+                {otpError && <p className="text-red-400 text-xs mt-2 flex items-center gap-1"><i className="ri-error-warning-line"></i>{otpError}</p>}
+              </div>
+            )}
+
+            {/* END RIDE */}
+            {rideStarted && (
+              <div>
+                <div className="flex items-center gap-2 mb-3 bg-green-500/10 border border-green-500/20 rounded-xl px-3 py-2">
+                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                  <p className="text-green-400 text-sm font-bold">Ride in progress</p>
+                </div>
+                <button onClick={endRide} disabled={endLoading}
+                  className="w-full bg-gradient-to-r from-red-500 to-rose-500 disabled:opacity-60 text-white font-black py-4 rounded-2xl transition active:scale-95 flex items-center justify-center gap-2 shadow-xl shadow-red-500/20 text-base">
+                  {endLoading
+                    ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Ending...</>
+                    : <><i className="ri-flag-2-fill text-xl"></i>End Trip</>}
+                </button>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* OTP SECTION */}
-        {!rideStarted && (
-          <div className="mb-4">
-            <p className="text-gray-400 text-xs mb-2">Ask passenger for OTP to start ride</p>
-            <div className="flex gap-3">
-              <input
-                type="tel"
-                maxLength={4}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                placeholder="Enter 4-digit OTP"
-                className="flex-1 bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white text-center text-lg font-bold tracking-widest outline-none focus:border-amber-500 transition"
-              />
-              <button
-                onClick={startRide}
-                disabled={startLoading}
-                className="bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-white font-bold px-5 rounded-xl transition active:scale-95 flex items-center gap-2"
-              >
-                {startLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : 'Start'}
-              </button>
-            </div>
-            {otpError && <p className="text-red-400 text-xs mt-2">⚠️ {otpError}</p>}
-          </div>
-        )}
-
-        {/* RIDE STARTED */}
-        {rideStarted && (
-          <div className="mb-2">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-              <p className="text-green-400 text-sm font-semibold">Ride in progress</p>
-            </div>
-
-            <button
-              onClick={endRide}
-              disabled={endLoading}
-              className="w-full bg-red-500 hover:bg-red-400 disabled:opacity-60 text-white font-bold py-3.5 rounded-2xl transition active:scale-95 flex items-center justify-center gap-2"
-            >
-              {endLoading
-                ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>Ending Ride...</>
-                : '🏁 End Ride'}
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
-};
-
-export default CaptainRiding;
+}

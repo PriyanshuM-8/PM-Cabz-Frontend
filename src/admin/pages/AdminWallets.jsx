@@ -113,7 +113,7 @@ const AdminWallets = () => {
 
   return (
     <AdminLayout>
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-white text-2xl font-black">Wallets</h1>

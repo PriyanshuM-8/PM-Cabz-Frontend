@@ -128,7 +128,7 @@ const AdminRides = () => {
 
   return (
     <AdminLayout>
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-white text-2xl font-black">Rides</h1>
@@ -163,11 +163,11 @@ const AdminRides = () => {
               <thead>
                 <tr className="border-b border-white/8">
                   <th className="text-left px-4 py-3 text-gray-500 text-xs font-semibold uppercase tracking-wider">Route</th>
-                  <th className="text-left px-4 py-3 text-gray-500 text-xs font-semibold uppercase tracking-wider">User</th>
-                  <th className="text-left px-4 py-3 text-gray-500 text-xs font-semibold uppercase tracking-wider">Captain</th>
+                  <th className="hidden sm:table-cell text-left px-4 py-3 text-gray-500 text-xs font-semibold uppercase tracking-wider">User</th>
+                  <th className="hidden md:table-cell text-left px-4 py-3 text-gray-500 text-xs font-semibold uppercase tracking-wider">Captain</th>
                   <th className="text-left px-4 py-3 text-gray-500 text-xs font-semibold uppercase tracking-wider">Fare</th>
                   <th className="text-left px-4 py-3 text-gray-500 text-xs font-semibold uppercase tracking-wider">Status</th>
-                  <th className="text-left px-4 py-3 text-gray-500 text-xs font-semibold uppercase tracking-wider">Date</th>
+                  <th className="hidden sm:table-cell text-left px-4 py-3 text-gray-500 text-xs font-semibold uppercase tracking-wider">Date</th>
                   <th className="text-left px-4 py-3 text-gray-500 text-xs font-semibold uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
@@ -184,17 +184,17 @@ const AdminRides = () => {
                       <p className="text-white text-xs font-semibold truncate">{r.pickup}</p>
                       <p className="text-gray-500 text-xs truncate">→ {r.destination}</p>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="hidden sm:table-cell px-4 py-3">
                       <p className="text-white text-xs font-semibold">{r.user?.fullname || "—"}</p>
                       <p className="text-gray-500 text-xs">{r.user?.mobile}</p>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="hidden md:table-cell px-4 py-3">
                       <p className="text-white text-xs font-semibold">{r.captain ? `${r.captain.fullname?.firstname} ${r.captain.fullname?.lastname || ""}` : "—"}</p>
                       <p className="text-gray-500 text-xs">{r.captain?.vehicle?.plate}</p>
                     </td>
                     <td className="px-4 py-3 text-amber-400 font-bold text-sm">₹{r.fare}</td>
                     <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{new Date(r.createdAt).toLocaleDateString("en-IN")}</td>
+                    <td className="hidden sm:table-cell px-4 py-3 text-gray-500 text-xs">{new Date(r.createdAt).toLocaleDateString("en-IN")}</td>
                     <td className="px-4 py-3">
                       <button onClick={() => setSelected(r)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-amber-500/15 hover:text-amber-400 text-gray-400 flex items-center justify-center transition text-sm">
                         <i className="ri-eye-line"></i>

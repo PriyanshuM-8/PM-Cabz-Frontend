@@ -22,13 +22,15 @@ const Home = () => {
   const [pickup, setPickup] = useState(stateData?.pickup || "");
   const [destination, setDestination] = useState(stateData?.destination || "");
   const [fare, setFare] = useState(stateData?.fare || {});
-  const [vehicleType, setVehicleType] = useState(null); // always start null — user must select
+  const [vehicleType, setVehicleType] = useState(stateData?.vehicleType || null);
 
-  // show vehicle panel if pickup+destination+fare present but no vehicleType selected yet
+  // agar vehicleType already selected hai toh seedha confirmRide dikhao
   const [vehiclePanel, setVehiclePanel] = useState(
-    !!(stateData?.pickup && stateData?.destination && stateData?.fare)
+    !!(stateData?.pickup && stateData?.destination && stateData?.fare && !stateData?.vehicleType)
   );
-  const [confirmRidePanel, setConfirmRidePanel] = useState(false); // always start closed
+  const [confirmRidePanel, setConfirmRidePanel] = useState(
+    !!(stateData?.pickup && stateData?.destination && stateData?.vehicleType)
+  );
   const [confirmRideDismissed, setConfirmRideDismissed] = useState(false);
   const [searchingDriver, setSearchingDriver] = useState(false);
   const [driverFound, setDriverFound] = useState(false);
@@ -191,7 +193,7 @@ const Home = () => {
           <div className="rounded-t-3xl shadow-2xl p-4">
             <div className="w-10 h-1 bg-white/30 rounded-full mx-auto mb-3"></div>
             <VehiclePanel
-              selectVehicle={setVehicleType}
+              selectVehicle={(type) => { setVehicleType(type); setConfirmRideDismissed(false); }}
               fare={fare}
               setConfirmRidePanel={setConfirmRidePanel}
               setVehiclePanel={setVehiclePanel}
