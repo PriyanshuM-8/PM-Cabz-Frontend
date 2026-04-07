@@ -6,25 +6,28 @@ import { BrowserRouter } from 'react-router-dom'
 import UserContext from './context/userContext'
 import CaptainContext from './context/CaptainContext'
 import SocketProvider from './context/SocketContext'
+import { ThemeProvider } from './context/themeContext'
 import "leaflet/dist/leaflet.css";
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     
     {/* ✅ SABSE UPAR */}
-    <SocketProvider>
+    <ThemeProvider>
+      <SocketProvider>
 
-      <CaptainContext>
-        <UserContext>
+        <CaptainContext>
+          <UserContext>
 
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
 
-        </UserContext>
-      </CaptainContext>
+          </UserContext>
+        </CaptainContext>
 
-    </SocketProvider>
+      </SocketProvider>
+    </ThemeProvider>
 
   </StrictMode>
 )

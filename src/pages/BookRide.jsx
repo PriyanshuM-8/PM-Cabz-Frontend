@@ -2,6 +2,8 @@ import { useState, useRef, useContext, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { UserDataContext } from "../context/userContext";
+import { useTheme } from "../context/themeContext";
+import ThemeToggle from "../components/ThemeToggle";
 import logo from "../photo/logo.png";
 import hatchback from "../photo/hatchback.png";
 import tuktuk from "../photo/tuktuk.png";
@@ -31,6 +33,7 @@ const reverseGeocode = async (lat, lng) => {
 const BookRide = () => {
   const navigate = useNavigate();
   const { user } = useContext(UserDataContext);
+  const { isDark } = useTheme();
 
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");
@@ -209,8 +212,12 @@ const BookRide = () => {
   const displayName = user?.fullname || "";
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col">
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-amber-500/6 rounded-full blur-[120px] pointer-events-none" />
+    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${
+      isDark ? 'bg-zinc-950' : 'bg-gray-50'
+    }`}>
+      <div className={`fixed top-0 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full blur-[120px] pointer-events-none ${
+        isDark ? 'bg-amber-500/6' : 'bg-amber-400/10'
+      }`} />
 
       {/* HEADER */}
       <div className="relative z-10 flex items-center justify-between px-5 pt-6 pb-4 max-w-2xl mx-auto w-full">
@@ -219,19 +226,25 @@ const BookRide = () => {
             <img src={logo} alt="" className="rounded-4xl h-20 w-20" />
           </div>
         </div>
+        
+        <ThemeToggle />
 
         {user?._id ? (
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-sm font-black text-white shadow-md">
               {(displayName || "U")[0]?.toUpperCase()}
             </div>
             <div className="text-right">
-              <p className="text-white text-xs font-semibold leading-tight">
+              <p className={`text-xs font-semibold leading-tight ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
                 {displayName || "User"}
               </p>
               <button
                 onClick={() => navigate("/user/logout")}
-                className="text-gray-500 hover:text-red-400 text-xs transition"
+                className={`text-xs transition ${
+                  isDark ? 'text-gray-500 hover:text-red-400' : 'text-gray-600 hover:text-red-500'
+                }`}
               >
                 Logout
               </button>
@@ -251,19 +264,31 @@ const BookRide = () => {
       <div className="relative z-10 flex-1 px-4 pb-8 space-y-4 max-w-2xl mx-auto w-full">
         {user?._id && (
           <div className="px-1">
-            <h2 className="text-white text-2xl font-black">
+            <h2 className={`text-2xl font-black ${
+              isDark ? 'text-white' : 'text-gray-900'
+            }`}>
               Hey {displayName.split(" ")[0] || "there"} 👋
             </h2>
-            <p className="text-gray-500 text-sm">Where are you going today?</p>
+            <p className={`text-sm ${
+              isDark ? 'text-gray-500' : 'text-gray-600'
+            }`}>Where are you going today?</p>
           </div>
         )}
 
         {/* BOOKING CARD */}
-        <div className="bg-zinc-900 rounded-3xl border border-white/10 shadow-2xl overflow-visible">
-          <div className="px-5 pt-5 pb-3 border-b border-white/5">
+        <div className={`rounded-3xl shadow-2xl overflow-visible transition-colors duration-300 ${
+          isDark 
+            ? 'bg-zinc-900 border border-white/10' 
+            : 'bg-white border border-gray-200 shadow-xl'
+        }`}>
+          <div className={`px-5 pt-5 pb-3 transition-colors duration-300 ${
+            isDark ? 'border-b border-white/5' : 'border-b border-gray-100'
+          }`}>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
+              <p className={`text-xs font-semibold uppercase tracking-wider ${
+                isDark ? 'text-gray-400' : 'text-gray-500'
+              }`}>
                 Book a Ride
               </p>
             </div>
@@ -275,8 +300,12 @@ const BookRide = () => {
               <div
                 className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all ${
                   activeField === "pickup"
-                    ? "border-green-400/60 bg-green-400/5 shadow-[0_0_0_3px_rgba(74,222,128,0.08)]"
-                    : "border-white/10 bg-white/5"
+                    ? (isDark 
+                        ? "border-green-400/60 bg-green-400/5 shadow-[0_0_0_3px_rgba(74,222,128,0.08)]" 
+                        : "border-green-500 bg-green-50 shadow-[0_0_0_3px_rgba(34,197,94,0.1)]")
+                    : (isDark 
+                        ? "border-white/10 bg-white/5" 
+                        : "border-gray-300 bg-gray-50")
                 }`}
               >
                 <div className="w-2.5 h-2.5 rounded-full bg-green-400 flex-shrink-0 shadow-[0_0_8px_#4ade80]" />
@@ -293,7 +322,11 @@ const BookRide = () => {
                       setActiveField(null);
                     }, 200)
                   }
-                  className="bg-transparent outline-none flex-1 text-white placeholder-gray-500 text-sm"
+                  className={`bg-transparent outline-none flex-1 text-sm ${
+                    isDark 
+                      ? 'text-white placeholder-gray-500' 
+                      : 'text-gray-900 placeholder-gray-500'
+                  }`}
                   placeholder="Pickup location"
                 />
                 <button
@@ -301,20 +334,19 @@ const BookRide = () => {
                     e.preventDefault();
                     useCurrentLocation();
                   }}
-                  className={`flex-shrink-0 px-2 -mx-2 py-1  cursor-pointer rounded-xl flex items-center justify-center gap-1.5 transition active:scale-90 ${
+                  className={`flex-shrink-0 px-2 -mx-2 py-1 cursor-pointer rounded-xl flex items-center justify-center gap-1.5 transition active:scale-90 ${
                     locLoading
                       ? "bg-amber-500/20 border border-amber-500/30"
-                      : "bg-white/5 hover:bg-amber-500/20 border border-white/10 hover:border-amber-500/30"
+                      : (isDark 
+                          ? "bg-white/5 hover:bg-amber-500/20 border border-white/10 hover:border-amber-500/30" 
+                          : "bg-gray-100 hover:bg-amber-100 border border-gray-200 hover:border-amber-300")
                   }`}
                   title="Use current location"
                 >
                   {locLoading ? (
-                    <div className="w-3.5 h-3.5  border-2 border-amber-400/40 border-t-amber-400 rounded-full animate-spin" />
+                    <div className="w-3.5 h-3.5 border-2 border-amber-400/40 border-t-amber-400 rounded-full animate-spin" />
                   ) : (
-                    <>
-                      {/* <span className="text-white text-xs ml-1">Use Location</span> */}
-                      <i className="ri-focus-3-line text-amber-500 text-sm"></i>
-                    </>
+                    <i className="ri-focus-3-line text-amber-500 text-sm"></i>
                   )}
                 </button>
                 {pickup && (
@@ -325,7 +357,9 @@ const BookRide = () => {
                       setFare(null);
                       setPickupSuggestions([]);
                     }}
-                    className="flex-shrink-0 text-gray-500 hover:text-white transition"
+                    className={`flex-shrink-0 transition ${
+                      isDark ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-gray-600'
+                    }`}
                   >
                     <i className="ri-close-line text-sm"></i>
                   </button>
@@ -335,7 +369,9 @@ const BookRide = () => {
               {panelOpen &&
                 activeField === "pickup" &&
                 pickupSuggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-[calc(100%+6px)] bg-zinc-800 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden max-h-52 overflow-y-auto animate-fadeIn">
+                  <div className={`absolute left-0 right-0 top-[calc(100%+6px)] border rounded-2xl shadow-2xl z-50 overflow-hidden max-h-52 overflow-y-auto animate-fadeIn ${
+                    isDark ? 'bg-zinc-800 border-white/10' : 'bg-white border-gray-200'
+                  }`}>
                     {pickupSuggestions.map((item, i) => (
                       <div
                         key={i}
@@ -345,12 +381,20 @@ const BookRide = () => {
                           setPanelOpen(false);
                           setFare(null);
                         }}
-                        className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/8 border-b border-white/5 last:border-none transition"
+                        className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b last:border-none transition ${
+                          isDark 
+                            ? 'hover:bg-white/8 border-white/5' 
+                            : 'hover:bg-gray-50 border-gray-100'
+                        }`}
                       >
-                        <div className="w-7 h-7 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center flex-shrink-0">
+                        <div className={`w-7 h-7 rounded-xl border flex items-center justify-center flex-shrink-0 ${
+                          isDark ? 'bg-green-500/10 border-green-500/20' : 'bg-green-50 border-green-200'
+                        }`}>
                           <i className="ri-map-pin-line text-green-400 text-xs"></i>
                         </div>
-                        <p className="text-sm text-gray-200 truncate">
+                        <p className={`text-sm truncate ${
+                          isDark ? 'text-gray-200' : 'text-gray-700'
+                        }`}>
                           {item.description}
                         </p>
                       </div>
@@ -362,9 +406,15 @@ const BookRide = () => {
             {/* CONNECTOR */}
             <div className="flex items-center gap-3 px-4">
               <div className="flex flex-col items-center gap-1 ml-[1px]">
-                <div className="w-0.5 h-1.5 bg-gray-700 rounded" />
-                <div className="w-0.5 h-1.5 bg-gray-700 rounded" />
-                <div className="w-0.5 h-1.5 bg-gray-700 rounded" />
+                <div className={`w-0.5 h-1.5 rounded ${
+                  isDark ? 'bg-gray-700' : 'bg-gray-400'
+                }`} />
+                <div className={`w-0.5 h-1.5 rounded ${
+                  isDark ? 'bg-gray-700' : 'bg-gray-400'
+                }`} />
+                <div className={`w-0.5 h-1.5 rounded ${
+                  isDark ? 'bg-gray-700' : 'bg-gray-400'
+                }`} />
               </div>
             </div>
 
@@ -373,8 +423,12 @@ const BookRide = () => {
               <div
                 className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all ${
                   activeField === "destination"
-                    ? "border-red-400/60 bg-red-400/5 shadow-[0_0_0_3px_rgba(248,113,113,0.08)]"
-                    : "border-white/10 bg-white/5"
+                    ? (isDark 
+                        ? "border-red-400/60 bg-red-400/5 shadow-[0_0_0_3px_rgba(248,113,113,0.08)]" 
+                        : "border-red-500 bg-red-50 shadow-[0_0_0_3px_rgba(239,68,68,0.1)]")
+                    : (isDark 
+                        ? "border-white/10 bg-white/5" 
+                        : "border-gray-300 bg-gray-50")
                 }`}
               >
                 <div className="w-2.5 h-2.5 rounded-full bg-red-400 flex-shrink-0 shadow-[0_0_8px_#f87171]" />
@@ -391,7 +445,11 @@ const BookRide = () => {
                       setActiveField(null);
                     }, 200)
                   }
-                  className="bg-transparent outline-none flex-1 text-white placeholder-gray-500 text-sm"
+                  className={`bg-transparent outline-none flex-1 text-sm ${
+                    isDark 
+                      ? 'text-white placeholder-gray-500' 
+                      : 'text-gray-900 placeholder-gray-500'
+                  }`}
                   placeholder="Where to?"
                 />
                 {destination && (
@@ -402,7 +460,9 @@ const BookRide = () => {
                       setFare(null);
                       setDestSuggestions([]);
                     }}
-                    className="flex-shrink-0 text-gray-500 hover:text-white transition"
+                    className={`flex-shrink-0 transition ${
+                      isDark ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-gray-600'
+                    }`}
                   >
                     <i className="ri-close-line text-sm"></i>
                   </button>
@@ -412,7 +472,9 @@ const BookRide = () => {
               {panelOpen &&
                 activeField === "destination" &&
                 destSuggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-[calc(100%+6px)] bg-zinc-800 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden max-h-52 overflow-y-auto animate-fadeIn">
+                  <div className={`absolute left-0 right-0 top-[calc(100%+6px)] border rounded-2xl shadow-2xl z-50 overflow-hidden max-h-52 overflow-y-auto animate-fadeIn ${
+                    isDark ? 'bg-zinc-800 border-white/10' : 'bg-white border-gray-200'
+                  }`}>
                     {destSuggestions.map((item, i) => (
                       <div
                         key={i}
@@ -422,12 +484,20 @@ const BookRide = () => {
                           setPanelOpen(false);
                           setFare(null);
                         }}
-                        className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/8 border-b border-white/5 last:border-none transition"
+                        className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b last:border-none transition ${
+                          isDark 
+                            ? 'hover:bg-white/8 border-white/5' 
+                            : 'hover:bg-gray-50 border-gray-100'
+                        }`}
                       >
-                        <div className="w-7 h-7 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0">
+                        <div className={`w-7 h-7 rounded-xl border flex items-center justify-center flex-shrink-0 ${
+                          isDark ? 'bg-red-500/10 border-red-500/20' : 'bg-red-50 border-red-200'
+                        }`}>
                           <i className="ri-map-pin-2-fill text-red-400 text-xs"></i>
                         </div>
-                        <p className="text-sm text-gray-200 truncate">
+                        <p className={`text-sm truncate ${
+                          isDark ? 'text-gray-200' : 'text-gray-700'
+                        }`}>
                           {item.description}
                         </p>
                       </div>
@@ -438,7 +508,9 @@ const BookRide = () => {
 
             {/* ERROR */}
             {error && (
-              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5">
+              <div className={`flex items-center gap-2 border rounded-xl px-3 py-2.5 ${
+                isDark ? 'bg-red-500/10 border-red-500/20' : 'bg-red-50 border-red-200'
+              }`}>
                 <i className="ri-error-warning-line text-red-400 text-sm flex-shrink-0"></i>
                 <p className="text-red-400 text-xs">{error}</p>
               </div>
@@ -470,10 +542,14 @@ const BookRide = () => {
         {fare && (
           <div className="animate-fadeIn">
             <div className="flex items-center justify-between mb-3 px-1">
-              <h3 className="text-white font-black text-lg">Choose Vehicle</h3>
+              <h3 className={`font-black text-lg ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>Choose Vehicle</h3>
               <button
                 onClick={() => setFare(null)}
-                className="flex items-center gap-1 text-gray-500 hover:text-white text-sm transition"
+                className={`flex items-center gap-1 text-sm transition ${
+                  isDark ? 'text-gray-500 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
                 <i className="ri-arrow-left-line text-xs"></i> Change
               </button>
@@ -484,7 +560,11 @@ const BookRide = () => {
                 <div
                   key={type}
                   onClick={() => handleVehicleSelect(type)}
-                  className="flex items-center justify-between bg-zinc-900 border border-white/10 hover:border-amber-500/50 hover:bg-amber-500/5 rounded-2xl px-4 py-4 cursor-pointer transition active:scale-[0.98] shadow-lg"
+                  className={`flex items-center justify-between border rounded-2xl px-4 py-4 cursor-pointer transition active:scale-[0.98] shadow-lg ${
+                    isDark 
+                      ? 'bg-zinc-900 border-white/10 hover:border-amber-500/50 hover:bg-amber-500/5' 
+                      : 'bg-white border-gray-200 hover:border-amber-400 hover:bg-amber-50'
+                  }`}
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-12 flex items-center justify-center">
@@ -495,37 +575,51 @@ const BookRide = () => {
                       />
                     </div>
                     <div>
-                      <p className="text-white font-bold text-sm">
+                      <p className={`font-bold text-sm ${
+                        isDark ? 'text-white' : 'text-gray-900'
+                      }`}>
                         {info.emoji} {info.name}
                       </p>
-                      <p className="text-gray-500 text-xs">{info.desc}</p>
+                      <p className={`text-xs ${
+                        isDark ? 'text-gray-500' : 'text-gray-600'
+                      }`}>{info.desc}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-amber-400 font-black text-xl">
                       ₹{fare[type]}
                     </p>
-                    <p className="text-gray-600 text-xs">Estimated</p>
+                    <p className={`text-xs ${
+                      isDark ? 'text-gray-600' : 'text-gray-500'
+                    }`}>Estimated</p>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* ROUTE SUMMARY */}
-            <div className="mt-3 bg-zinc-900 border border-white/10 rounded-2xl p-4">
-              <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-3">
+            <div className={`mt-3 border rounded-2xl p-4 transition-colors duration-300 ${
+              isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-gray-200'
+            }`}>
+              <p className={`text-xs font-semibold uppercase tracking-wider mb-3 ${
+                isDark ? 'text-gray-500' : 'text-gray-600'
+              }`}>
                 Route
               </p>
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-2 h-2 rounded-full bg-green-400 mt-1.5 flex-shrink-0 shadow-[0_0_4px_#4ade80]" />
-                <p className="text-gray-300 text-sm leading-relaxed">
+                <p className={`text-sm leading-relaxed ${
+                  isDark ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   {pickup}
                 </p>
               </div>
               <div className="w-0.5 h-4 bg-gradient-to-b from-green-400/30 to-red-400/30 ml-[3px] mb-2" />
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 flex-shrink-0 shadow-[0_0_4px_#f87171]" />
-                <p className="text-gray-300 text-sm leading-relaxed">
+                <p className={`text-sm leading-relaxed ${
+                  isDark ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   {destination}
                 </p>
               </div>
@@ -535,7 +629,9 @@ const BookRide = () => {
       </div>
 
       {/* ── BOTTOM NAV ── */}
-      <nav className="sticky bottom-0 z-30 bg-zinc-900/95 backdrop-blur-xl border-t border-white/8">
+      <nav className={`sticky bottom-0 z-30 backdrop-blur-xl border-t transition-colors duration-300 ${
+        isDark ? 'bg-zinc-900/95 border-white/8' : 'bg-white/95 border-gray-200'
+      }`}>
         <div className="flex items-center justify-around px-2 py-2 max-w-2xl mx-auto">
           {[
             { id: "home", icon: "ri-home-2-line", label: "Home" },
@@ -549,7 +645,7 @@ const BookRide = () => {
               className={`flex flex-col items-center gap-0.5 px-4 py-2 rounded-2xl transition-all active:scale-95 ${
                 activeTab === tab.id
                   ? "text-amber-400"
-                  : "text-gray-500 hover:text-gray-300"
+                  : (isDark ? "text-gray-500 hover:text-gray-300" : "text-gray-600 hover:text-gray-800")
               }`}
             >
               <div
@@ -566,7 +662,7 @@ const BookRide = () => {
               </div>
               <span
                 className={`text-[10px] font-semibold ${
-                  activeTab === tab.id ? "text-amber-400" : "text-gray-600"
+                  activeTab === tab.id ? "text-amber-400" : (isDark ? "text-gray-600" : "text-gray-500")
                 }`}
               >
                 {tab.label}
