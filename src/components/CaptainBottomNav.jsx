@@ -1,8 +1,9 @@
 import { useEffect, useState, useContext } from "react";
 import axios from "axios";
+import BASE_URL from "../baseURL";
 import { CaptainDataContext } from "../context/CaptainContext";
 
-const BASE = import.meta.env.VITE_BASE_URL;
+const BASE = BASE_URL;
 const auth = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem("captain-token")}` },
 });

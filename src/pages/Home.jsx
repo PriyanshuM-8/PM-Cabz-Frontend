@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext, useCallback } from "react";
 import axios from "axios";
+import BASE_URL from "../baseURL";
 import { SocketContext } from "../context/SocketContext";
 import { UserDataContext } from "../context/userContext";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -101,7 +102,7 @@ const Home = () => {
   // ================= CREATE RIDE =================
   const createRide = useCallback(async () => {
     const res = await axios.post(
-      `${import.meta.env.VITE_BASE_URL}/rides/create`,
+      `${BASE_URL}/rides/create`,
       { pickup, destination, vehicleType, fare: fare[vehicleType] },
       { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
     );
@@ -284,7 +285,7 @@ const Home = () => {
               if (ride?._id) {
                 try {
                   await axios.post(
-                    `${import.meta.env.VITE_BASE_URL}/rides/cancel`,
+                    `${BASE_URL}/rides/cancel`,
                     { rideId: ride._id },
                     { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
                   );

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import BASE_URL from "../baseURL";
 
-const BASE = import.meta.env.VITE_BASE_URL;
+const BASE = BASE_URL;
 const authHeader = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("captain-token")}` } });
 
 const loadRazorpay = () =>

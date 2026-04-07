@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import AdminLayout from "../components/AdminLayout";
 import api from "../api";
+import BASE_URL from "../../baseURL";
 
-const BASE = import.meta.env.VITE_BASE_URL;
+const BASE = BASE_URL;
 
 const Badge = ({ blocked }) => (
   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${

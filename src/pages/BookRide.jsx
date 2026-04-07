@@ -63,7 +63,7 @@ const BookRide = () => {
     setDestination(saved.destination);
     setLoading(true);
     axios
-      .get(`${import.meta.env.VITE_BASE_URL}/rides/get-fare`, {
+      .get(`/rides/get-fare`, {
         params: { pickup: saved.pickup, destination: saved.destination },
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -78,7 +78,7 @@ const BookRide = () => {
     setHistoryLoading(true);
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_BASE_URL}/rides/active-ride`,
+        `/rides/active-ride`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -103,7 +103,7 @@ const BookRide = () => {
       if (!value || value.length < 3) return setSuggestions([]);
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BASE_URL}/maps/get-suggestions`,
+          `/maps/get-suggestions`,
           { params: { input: value.trim() } },
         );
         setSuggestions(res.data || []);
@@ -178,7 +178,7 @@ const BookRide = () => {
         return;
       }
       const res = await axios.get(
-        `${import.meta.env.VITE_BASE_URL}/rides/get-fare`,
+        `/rides/get-fare`,
         {
           params: { pickup: pickup.trim(), destination: destination.trim() },
           headers: { Authorization: `Bearer ${token}` },

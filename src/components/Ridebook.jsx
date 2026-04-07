@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useContext } from "react";
 import axios from "axios";
+import BASE_URL from "../baseURL";
 import "remixicon/fonts/remixicon.css";
 import { SocketContext } from "../context/SocketContext";
 import { UserDataContext } from "../context/userContext";
@@ -32,7 +33,7 @@ const Ridebook = (props) => {
       if (!value || value.length < 3) return;
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BASE_URL}/maps/get-suggestions`,
+          `${BASE_URL}/maps/get-suggestions`,
           { params: { input: value.trim() } }
         );
         setSuggestions(res.data);
@@ -71,7 +72,7 @@ const Ridebook = (props) => {
     try {
       // 🔥 GET FARE (token check happens here too)
       const res = await axios.get(
-        `${import.meta.env.VITE_BASE_URL}/rides/get-fare`,
+        `${BASE_URL}/rides/get-fare`,
         {
           params: { pickup: pickup.trim(), destination: destination.trim() },
           headers: { Authorization: `Bearer ${token}` },

@@ -1,4 +1,6 @@
-const VITE_BASE_URL = import.meta.env.VITE_BASE_URL;
+import BASE_URL from '../baseURL';
+
+const BASE = BASE_URL;
 
 const WaitingForDriver = ({ ride }) => {
   const captain = ride?.captain;

@@ -1,9 +1,10 @@
 import { createContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
+import BASE_URL from '../baseURL';
 
 export const SocketContext = createContext();
 
-const socket = io(`${import.meta.env.VITE_BASE_URL}`, {
+const socket = io(BASE_URL, {
   reconnection: true,
   reconnectionAttempts: Infinity,
   reconnectionDelay: 500,

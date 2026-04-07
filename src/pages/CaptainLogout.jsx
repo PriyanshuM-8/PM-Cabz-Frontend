@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import axios from "axios";
+import BASE_URL from "../baseURL";
 import { useNavigate } from "react-router-dom";
 
 const CaptainLogout = () => {
@@ -8,7 +9,7 @@ const CaptainLogout = () => {
   useEffect(() => {
     const token = localStorage.getItem("captain-token");
     axios
-      .get(`${import.meta.env.VITE_BASE_URL}/captains/logout`, {
+      .get(`${BASE_URL}/captains/logout`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .finally(() => {

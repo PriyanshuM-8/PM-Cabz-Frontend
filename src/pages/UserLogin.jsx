@@ -1,6 +1,7 @@
 import { useState, useContext, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import BASE_URL from "../baseURL";
 import { UserDataContext } from "../context/userContext";
 import logo from "../photo/logo.png";
 
@@ -27,12 +28,12 @@ const UserLogin = () => {
     setLoading(true);
     try {
       const checkRes = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/users/check-user`,
+        `${BASE_URL}/users/check-user`,
         { mobile },
       );
       setIsNewUser(!checkRes.data.exists);
       const otpRes = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/users/send-otp`,
+        `${BASE_URL}/users/send-otp`,
         { mobile },
       );
       setDemoOtp(otpRes.data.demoOtp);
@@ -78,7 +79,7 @@ const UserLogin = () => {
     setLoading(true);
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/users/verify-otp`,
+        `${BASE_URL}/users/verify-otp`,
         {
           mobile,
           otp,

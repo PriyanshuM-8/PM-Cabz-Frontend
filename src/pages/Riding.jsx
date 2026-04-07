@@ -22,7 +22,9 @@ function RecenterMap({ position }) {
   return null;
 }
 
-const BASE = import.meta.env.VITE_BASE_URL;
+import BASE_URL from '../baseURL';
+
+const BASE = BASE_URL;
 
 const Riding = () => {
   const location = useLocation();

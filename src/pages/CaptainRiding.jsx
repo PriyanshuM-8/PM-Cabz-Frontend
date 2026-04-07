@@ -1,6 +1,7 @@
 import { useState, useContext, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import BASE_URL from '../baseURL';
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import { SocketContext } from '../context/SocketContext';
 import { CaptainDataContext } from '../context/CaptainContext';
@@ -58,7 +59,7 @@ export default function CaptainRiding() {
     if (otp.length !== 4) { setOtpError('Enter 4-digit OTP'); return; }
     setOtpError(''); setStartLoading(true);
     try {
-      await axios.get(`${import.meta.env.VITE_BASE_URL}/rides/start-ride`, { params: { rideId: rideData?._id, otp }, ...auth() });
+      await axios.get(`${BASE_URL}/rides/start-ride`, { params: { rideId: rideData?._id, otp }, ...auth() });
       setRideStarted(true);
     } catch (e) { setOtpError(e.response?.data?.message || 'Invalid OTP'); }
     finally { setStartLoading(false); }
@@ -67,9 +68,9 @@ export default function CaptainRiding() {
   const endRide = async () => {
     setEndLoading(true);
     try {
-      await axios.post(`${import.meta.env.VITE_BASE_URL}/rides/end-ride`, { rideId: rideData?._id }, auth());
+      await axios.post(`${BASE_URL}/rides/end-ride`, { rideId: rideData?._id }, auth());
       try {
-        const r = await axios.get(`${import.meta.env.VITE_BASE_URL}/captains/profile`, auth());
+        const r = await axios.get(`${BASE_URL}/captains/profile`, auth());
         setStats(r.data.captain); if (setCaptain) setCaptain(r.data.captain);
       } catch (_) {}
       setDoneData(rideData); setRideComplete(true);

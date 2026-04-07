@@ -2,9 +2,10 @@ import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CaptainDataContext } from "../context/CaptainContext";
 import axios from "axios";
+import BASE_URL from "../baseURL";
 import logo from '../photo/logo.png'
 
-const BASE = import.meta.env.VITE_BASE_URL;
+const BASE = BASE_URL;
 
 // ── MODE: "login" | "forgot-mobile" | "forgot-otp"
 const CaptainLogin = () => {

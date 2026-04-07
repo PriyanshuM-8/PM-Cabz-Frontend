@@ -2,6 +2,7 @@ import { useState, useContext, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CaptainDataContext } from "../context/CaptainContext";
 import axios from "axios";
+import BASE_URL from "../baseURL";
 import logo from "../photo/logo.png";
 
 const STEPS = ["Personal", "Vehicle", "Documents"];
@@ -103,7 +104,7 @@ const CaptainSignup = () => {
     formData.append("documents[aadhaarNumber]", aadhaarNumber.trim());
     formData.append("documents[drivingLicense]", dlNumber.trim());
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BASE_URL}/captains/register`, formData);
+      const res = await axios.post(`${BASE_URL}/captains/register`, formData);
       setCaptain(res.data.captain);
       localStorage.setItem("captain-token", res.data.token);
       // console.log(res);
