@@ -170,6 +170,7 @@ const BookRide = () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
+        setLoading(false);
         sessionStorage.setItem(
           "pendingRide",
           JSON.stringify({
@@ -190,6 +191,7 @@ const BookRide = () => {
       setFare(res.data);
     } catch (err) {
       if (err.response?.status === 401) {
+        setLoading(false);
         sessionStorage.setItem(
           "pendingRide",
           JSON.stringify({
@@ -207,6 +209,15 @@ const BookRide = () => {
   };
 
   const handleVehicleSelect = (type) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      sessionStorage.setItem(
+        "pendingRide",
+        JSON.stringify({ pickup: pickup.trim(), destination: destination.trim() }),
+      );
+      navigate("/login");
+      return;
+    }
     navigate("/home", {
       state: { pickup, destination, fare, vehicleType: type },
     });
