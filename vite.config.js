@@ -2,7 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-// https://vite.dev/config/
+const BACKEND = 'https://pm-cabz-backend.onrender.com'
+
 export default defineConfig({
   plugins: [
     tailwindcss(),
@@ -10,12 +11,12 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '/rides': 'https://pm-cabz-backend.onrender.com',
-      '/maps': 'https://pm-cabz-backend.onrender.com',
-      '/users': 'https://pm-cabz-backend.onrender.com',
-      '/captains': 'https://pm-cabz-backend.onrender.com',
-      '/payment': 'https://pm-cabz-backend.onrender.com',
-      '/admin': 'https://pm-cabz-backend.onrender.com',
+      '/rides':    { target: BACKEND, changeOrigin: true, secure: false },
+      '/maps':     { target: BACKEND, changeOrigin: true, secure: false },
+      '/users':    { target: BACKEND, changeOrigin: true, secure: false },
+      '/captains': { target: BACKEND, changeOrigin: true, secure: false },
+      '/payment':  { target: BACKEND, changeOrigin: true, secure: false },
+      '/admin':    { target: BACKEND, changeOrigin: true, secure: false },
     }
   }
 })
