@@ -88,7 +88,12 @@ const UserLogin = () => {
       );
       setUser(res.data.user);
       localStorage.setItem("token", res.data.token);
-      navigate("/book");
+      const pending = sessionStorage.getItem("pendingRide");
+      if (pending) {
+        navigate("/book");
+      } else {
+        navigate("/book");
+      }
     } catch {
       setError("Login failed. Please try again.");
     } finally {

@@ -1,6 +1,7 @@
 import { useState, useRef, useContext, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import BASE_URL from "../baseURL";
 import { UserDataContext } from "../context/userContext";
 import { CaptainDataContext } from "../context/CaptainContext";
 import { useTheme } from "../context/themeContext";
@@ -66,12 +67,12 @@ const BookRide = () => {
     setDestination(saved.destination);
     setLoading(true);
     axios
-      .get(`/rides/get-fare`, {
+      .get(`${BASE_URL}/rides/get-fare`, {
         params: { pickup: saved.pickup, destination: saved.destination },
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setFare(res.data))
-      .catch(() => {})
+      .catch(() => setError("Could not fetch fare. Please try again."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -81,7 +82,7 @@ const BookRide = () => {
     setHistoryLoading(true);
     try {
       const res = await axios.get(
-        `/rides/active-ride`,
+        `${BASE_URL}/rides/active-ride`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -106,7 +107,7 @@ const BookRide = () => {
       if (!value || value.length < 3) return setSuggestions([]);
       try {
         const res = await axios.get(
-          `/maps/get-suggestions`,
+          `${BASE_URL}/maps/get-suggestions`,
           { params: { input: value.trim() } },
         );
         setSuggestions(res.data || []);
@@ -182,7 +183,7 @@ const BookRide = () => {
         return;
       }
       const res = await axios.get(
-        `/rides/get-fare`,
+        `${BASE_URL}/rides/get-fare`,
         {
           params: { pickup: pickup.trim(), destination: destination.trim() },
           headers: { Authorization: `Bearer ${token}` },

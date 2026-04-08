@@ -8,14 +8,7 @@ const UserContext = ({ children }) => {
 
   const { socket } = useContext(SocketContext);
 
-  // State to store user details
-  const [user, setUser] = useState({
-    email: '',
-    fullName: {
-      firstName: '',
-      lastName: ''
-    }
-  });
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     if (!user?._id || !socket) return;
