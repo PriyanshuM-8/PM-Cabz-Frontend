@@ -35,7 +35,7 @@ const reverseGeocode = async (lat, lng) => {
 
 const BookRide = () => {
   const navigate = useNavigate();
-  const { user } = useContext(UserDataContext);
+  const { user, setUser } = useContext(UserDataContext);
   const { captain } = useContext(CaptainDataContext);
   const { isDark } = useTheme();
 
@@ -55,6 +55,18 @@ const BookRide = () => {
   const [historyLoading, setHistoryLoading] = useState(false);
 
   const debounceRef = useRef(null);
+
+  // ── Token se user profile fetch karo (context null hone par) ──
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token || user?._id) return;
+    axios
+      .get(`${BASE_URL}/users/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setUser(res.data))
+      .catch(() => localStorage.removeItem("token"));
+  }, []);
 
   // ── Login ke baad sessionStorage se pending ride restore karo ──
   useEffect(() => {
