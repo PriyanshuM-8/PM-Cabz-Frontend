@@ -90,7 +90,7 @@ const CaptainLogin = () => {
       {/* HEADER */}
       <div className="relative z-10 flex items-center justify-between px-6 pt-6">
         <button
-          onClick={() => mode !== "login" ? resetForgot() : navigate("/")}
+          onClick={() => mode !== "login" ? resetForgot() : navigate("/captain-login")}
           className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center"
         >
           <i className="ri-arrow-left-line text-white text-sm"></i>

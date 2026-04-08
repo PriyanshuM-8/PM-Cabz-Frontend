@@ -7,6 +7,9 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      screens: {
+        'desktop': '600px',
+      },
       animation: {
         'fadeIn': 'fadeIn 0.3s ease-in-out',
         'slideUp': 'slideUp 0.3s ease-out',
@@ -26,5 +29,5 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [require('tailwind-scrollbar')({ nocompatible: true })],
 }

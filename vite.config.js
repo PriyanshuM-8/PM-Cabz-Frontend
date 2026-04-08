@@ -8,4 +8,14 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
+  server: {
+    proxy: {
+      '/rides': 'https://pm-cabz-backend.onrender.com',
+      '/maps': 'https://pm-cabz-backend.onrender.com',
+      '/users': 'https://pm-cabz-backend.onrender.com',
+      '/captains': 'https://pm-cabz-backend.onrender.com',
+      '/payment': 'https://pm-cabz-backend.onrender.com',
+      '/admin': 'https://pm-cabz-backend.onrender.com',
+    }
+  }
 })

@@ -7,7 +7,7 @@ const ThemeToggle = () => {
     <button
       onClick={toggleTheme}
       className={`
-        relative w-16 h-8 rounded-full transition-all duration-500 ease-in-out transform
+        relative w-12 h-5 rounded-full transition-all duration-500 ease-in-out transform
         ${isDark 
           ? 'bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 shadow-inner border border-slate-600/50' 
           : 'bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400 shadow-lg shadow-amber-400/40 border border-amber-300/50'
@@ -20,14 +20,14 @@ const ThemeToggle = () => {
       {/* Toggle Circle */}
       <div
         className={`
-          absolute top-0.5 w-7 h-7 rounded-full transition-all duration-500 ease-in-out
+          absolute top-0.5 w-5 h-4 rounded-full transition-all duration-500 ease-in-out
           ${isDark 
             ? 'left-0.5 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 shadow-lg border border-slate-200/50' 
             : 'left-8 bg-gradient-to-br from-white via-gray-50 to-gray-100 shadow-xl border border-white/80'
           }
           flex items-center justify-center backdrop-blur-sm
         `}
-      >
+      > 
         {/* Icon */}
         <div className="text-sm transition-all duration-300">
           {isDark ? (
@@ -41,6 +41,9 @@ const ThemeToggle = () => {
           )}
         </div>
       </div>
+       
+
+        {/* <p className='text-red-600 mx-5'>Dark mode </p> */}
       
       {/* Background Icons */}
       <div className="absolute inset-0 flex items-center justify-between px-2.5 pointer-events-none">

@@ -2,8 +2,10 @@ import { useState, useRef, useContext, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { UserDataContext } from "../context/userContext";
+import { CaptainDataContext } from "../context/CaptainContext";
 import { useTheme } from "../context/themeContext";
 import ThemeToggle from "../components/ThemeToggle";
+import UserLaptopView from "../components/UserLaptopView";
 import logo from "../photo/logo.png";
 import hatchback from "../photo/hatchback.png";
 import tuktuk from "../photo/tuktuk.png";
@@ -33,6 +35,7 @@ const reverseGeocode = async (lat, lng) => {
 const BookRide = () => {
   const navigate = useNavigate();
   const { user } = useContext(UserDataContext);
+  const { captain } = useContext(CaptainDataContext);
   const { isDark } = useTheme();
 
   const [pickup, setPickup] = useState("");
@@ -211,10 +214,187 @@ const BookRide = () => {
 
   const displayName = user?.fullname || "";
 
+  // ── Booking form content (shared between mobile & desktop) ──
+  const bookingFormContent = (
+    <div className="space-y-3">
+      {/* PICKUP */}
+      <div className="relative">
+        <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all ${
+          activeField === "pickup"
+            ? (isDark ? "border-green-400/60 bg-green-400/5 shadow-[0_0_0_3px_rgba(74,222,128,0.08)]" : "border-green-500 bg-green-50 shadow-[0_0_0_3px_rgba(34,197,94,0.1)]")
+            : (isDark ? "border-white/10 bg-white/5" : "border-gray-300 bg-gray-50")
+        }`}>
+          <div className="w-2.5 h-2.5 rounded-full bg-green-400 flex-shrink-0 shadow-[0_0_8px_#4ade80]" />
+          <input
+            value={pickup}
+            onChange={handlePickupChange}
+            onFocus={() => { setActiveField("pickup"); setPanelOpen(true); }}
+            onBlur={() => setTimeout(() => { setPanelOpen(false); setActiveField(null); }, 200)}
+            className={`bg-transparent outline-none flex-1 text-sm ${
+              isDark ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-500'
+            }`}
+            placeholder="Pickup location"
+          />
+          <button
+            onMouseDown={(e) => { e.preventDefault(); useCurrentLocation(); }}
+            className={`flex-shrink-0 px-2 -mx-2 py-1 cursor-pointer rounded-xl flex items-center justify-center gap-1.5 transition active:scale-90 ${
+              locLoading ? "bg-amber-500/20 border border-amber-500/30"
+                : (isDark ? "bg-white/5 hover:bg-amber-500/20 border border-white/10 hover:border-amber-500/30" : "bg-gray-100 hover:bg-amber-100 border border-gray-200 hover:border-amber-300")
+            }`}
+          >
+            {locLoading ? <div className="w-3.5 h-3.5 border-2 border-amber-400/40 border-t-amber-400 rounded-full animate-spin" /> : <i className="ri-focus-3-line text-amber-500 text-sm" />}
+          </button>
+          {pickup && (
+            <button onMouseDown={(e) => { e.preventDefault(); setPickup(""); setFare(null); setPickupSuggestions([]); }} className={`flex-shrink-0 transition ${isDark ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+              <i className="ri-close-line text-sm" />
+            </button>
+          )}
+        </div>
+        {panelOpen && activeField === "pickup" && pickupSuggestions.length > 0 && (
+          <div className={`absolute left-0 right-0 top-[calc(100%+6px)] border rounded-2xl shadow-2xl z-50 overflow-hidden max-h-52 overflow-y-auto ${
+            isDark ? 'bg-zinc-800 border-white/10' : 'bg-white border-gray-200'
+          }`}>
+            {pickupSuggestions.map((item, i) => (
+              <div key={i} onMouseDown={() => { setPickup(item.description); setPickupSuggestions([]); setPanelOpen(false); setFare(null); }}
+                className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b last:border-none transition ${
+                  isDark ? 'hover:bg-white/8 border-white/5' : 'hover:bg-gray-50 border-gray-100'
+                }`}>
+                <div className={`w-7 h-7 rounded-xl border flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-green-500/10 border-green-500/20' : 'bg-green-50 border-green-200'}`}>
+                  <i className="ri-map-pin-line text-green-400 text-xs" />
+                </div>
+                <p className={`text-sm truncate ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{item.description}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* CONNECTOR */}
+      <div className="flex items-center gap-3 px-4">
+        <div className="flex flex-col items-center gap-1 ml-[1px]">
+          <div className={`w-0.5 h-1.5 rounded ${isDark ? 'bg-gray-700' : 'bg-gray-400'}`} />
+          <div className={`w-0.5 h-1.5 rounded ${isDark ? 'bg-gray-700' : 'bg-gray-400'}`} />
+          <div className={`w-0.5 h-1.5 rounded ${isDark ? 'bg-gray-700' : 'bg-gray-400'}`} />
+        </div>
+      </div>
+
+      {/* DESTINATION */}
+      <div className="relative">
+        <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all ${
+          activeField === "destination"
+            ? (isDark ? "border-red-400/60 bg-red-400/5 shadow-[0_0_0_3px_rgba(248,113,113,0.08)]" : "border-red-500 bg-red-50 shadow-[0_0_0_3px_rgba(239,68,68,0.1)]")
+            : (isDark ? "border-white/10 bg-white/5" : "border-gray-300 bg-gray-50")
+        }`}>
+          <div className="w-2.5 h-2.5 rounded-full bg-red-400 flex-shrink-0 shadow-[0_0_8px_#f87171]" />
+          <input
+            value={destination}
+            onChange={handleDestChange}
+            onFocus={() => { setActiveField("destination"); setPanelOpen(true); }}
+            onBlur={() => setTimeout(() => { setPanelOpen(false); setActiveField(null); }, 200)}
+            className={`bg-transparent outline-none flex-1 text-sm ${
+              isDark ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-500'
+            }`}
+            placeholder="Where to?"
+          />
+          {destination && (
+            <button onMouseDown={(e) => { e.preventDefault(); setDestination(""); setFare(null); setDestSuggestions([]); }} className={`flex-shrink-0 transition ${isDark ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+              <i className="ri-close-line text-sm" />
+            </button>
+          )}
+        </div>
+        {panelOpen && activeField === "destination" && destSuggestions.length > 0 && (
+          <div className={`absolute left-0 right-0 top-[calc(100%+6px)] border rounded-2xl shadow-2xl z-50 overflow-hidden max-h-52 overflow-y-auto ${
+            isDark ? 'bg-zinc-800 border-white/10' : 'bg-white border-gray-200'
+          }`}>
+            {destSuggestions.map((item, i) => (
+              <div key={i} onMouseDown={() => { setDestination(item.description); setDestSuggestions([]); setPanelOpen(false); setFare(null); }}
+                className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b last:border-none transition ${
+                  isDark ? 'hover:bg-white/8 border-white/5' : 'hover:bg-gray-50 border-gray-100'
+                }`}>
+                <div className={`w-7 h-7 rounded-xl border flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-red-500/10 border-red-500/20' : 'bg-red-50 border-red-200'}`}>
+                  <i className="ri-map-pin-2-fill text-red-400 text-xs" />
+                </div>
+                <p className={`text-sm truncate ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{item.description}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ERROR */}
+      {error && (
+        <div className={`flex items-center gap-2 border rounded-xl px-3 py-2.5 ${isDark ? 'bg-red-500/10 border-red-500/20' : 'bg-red-50 border-red-200'}`}>
+          <i className="ri-error-warning-line text-red-400 text-sm flex-shrink-0" />
+          <p className="text-red-400 text-xs">{error}</p>
+        </div>
+      )}
+
+      {/* BOOK BUTTON */}
+      {!fare && (
+        <button onClick={getFare} disabled={loading || !pickup || !destination}
+          className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl transition active:scale-95 shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2 text-base mt-1"
+        >
+          {loading ? (<><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Calculating fare...</>) : (<><i className="ri-taxi-line text-lg" />Book a Ride</>)}
+        </button>
+      )}
+
+      {/* VEHICLE SELECTION */}
+      {fare && (
+        <div className="animate-fadeIn">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className={`font-black text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>Choose Vehicle</h3>
+            <button onClick={() => setFare(null)} className={`flex items-center gap-1 text-sm transition ${isDark ? 'text-gray-500 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+              <i className="ri-arrow-left-line text-xs" /> Change
+            </button>
+          </div>
+          <div className="space-y-3">
+            {Object.entries(vehicleLabels).map(([type, info]) => (
+              <div key={type} onClick={() => handleVehicleSelect(type)}
+                className={`flex items-center justify-between border rounded-2xl px-4 py-4 cursor-pointer transition active:scale-[0.98] shadow-lg ${
+                  isDark ? 'bg-zinc-900 border-white/10 hover:border-amber-500/50 hover:bg-amber-500/5' : 'bg-white border-gray-200 hover:border-amber-400 hover:bg-amber-50'
+                }`}>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-12 flex items-center justify-center">
+                    <img src={vehicleImages[type]} alt={type} className="h-11 w-14 object-contain" />
+                  </div>
+                  <div>
+                    <p className={`font-bold text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>{info.emoji} {info.name}</p>
+                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>{info.desc}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-amber-400 font-black text-xl">₹{fare[type]}</p>
+                  <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-500'}`}>Estimated</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className={`mt-3 border rounded-2xl p-4 ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-gray-200'}`}>
+            <p className={`text-xs font-semibold uppercase tracking-wider mb-3 ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>Route</p>
+            <div className="flex items-start gap-3 mb-2">
+              <div className="w-2 h-2 rounded-full bg-green-400 mt-1.5 flex-shrink-0 shadow-[0_0_4px_#4ade80]" />
+              <p className={`text-sm leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{pickup}</p>
+            </div>
+            <div className="w-0.5 h-4 bg-gradient-to-b from-green-400/30 to-red-400/30 ml-[3px] mb-2" />
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 flex-shrink-0 shadow-[0_0_4px_#f87171]" />
+              <p className={`text-sm leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{destination}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
-    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${
-      isDark ? 'bg-zinc-950' : 'bg-gray-50'
-    }`}>
+    <>
+      {/* ── DESKTOP VIEW ── */}
+      <UserLaptopView bookRidePanel={bookingFormContent} />
+
+      {/* ── MOBILE / TABLET VIEW ── */}
+      <div className={`desktop:hidden min-h-screen flex flex-col transition-colors duration-300 ${
+        isDark ? 'bg-zinc-950' : 'bg-gray-50'
+      }`}>
       <div className={`fixed top-0 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full blur-[120px] pointer-events-none ${
         isDark ? 'bg-amber-500/6' : 'bg-amber-400/10'
       }`} />
@@ -229,6 +409,10 @@ const BookRide = () => {
         
         <ThemeToggle />
 
+
+
+         {/* login click ke liye */}
+         
         {user?._id ? (
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-sm font-black text-white shadow-md">
@@ -250,14 +434,37 @@ const BookRide = () => {
               </button>
             </div>
           </div>
+        ) : captain?._id ? (
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-sm font-black text-white shadow-md">
+              {(captain.fullname || "C")[0]?.toUpperCase()}
+            </div>
+            <div className="text-right">
+              <p className={`text-xs font-semibold leading-tight ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
+                {captain.fullname || "Captain"}
+              </p>
+              <button
+                onClick={() => navigate("/captain/logout")}
+                className={`text-xs transition ${
+                  isDark ? 'text-gray-500 hover:text-red-400' : 'text-gray-600 hover:text-red-500'
+                }`}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
         ) : (
           <button
-            onClick={() => navigate("/login")}
-            className="text-xs bg-amber-500/15 border border-amber-500/30 text-amber-400 px-3 py-1.5 rounded-full font-semibold hover:bg-amber-500/25 transition"
+            onClick={() => navigate("/captain-login")}
+            className="text-xs bg-blue-500/15 border border-blue-500/30 text-blue-400 px-3 py-1.5 rounded-full font-semibold hover:bg-blue-500/25 transition"
           >
-            Login
+            Captain Login
           </button>
         )}
+
+
       </div>
 
       {/* MAIN */}
@@ -277,9 +484,7 @@ const BookRide = () => {
 
         {/* BOOKING CARD */}
         <div className={`rounded-3xl shadow-2xl overflow-visible transition-colors duration-300 ${
-          isDark 
-            ? 'bg-zinc-900 border border-white/10' 
-            : 'bg-white border border-gray-200 shadow-xl'
+          isDark ? 'bg-zinc-900 border border-white/10' : 'bg-white border border-gray-200 shadow-xl'
         }`}>
           <div className={`px-5 pt-5 pb-3 transition-colors duration-300 ${
             isDark ? 'border-b border-white/5' : 'border-b border-gray-100'
@@ -288,344 +493,13 @@ const BookRide = () => {
               <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
               <p className={`text-xs font-semibold uppercase tracking-wider ${
                 isDark ? 'text-gray-400' : 'text-gray-500'
-              }`}>
-                Book a Ride
-              </p>
+              }`}>Book a Ride</p>
             </div>
           </div>
-
-          <div className="px-5 py-4 space-y-3">
-            {/* PICKUP */}
-            <div className="relative">
-              <div
-                className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all ${
-                  activeField === "pickup"
-                    ? (isDark 
-                        ? "border-green-400/60 bg-green-400/5 shadow-[0_0_0_3px_rgba(74,222,128,0.08)]" 
-                        : "border-green-500 bg-green-50 shadow-[0_0_0_3px_rgba(34,197,94,0.1)]")
-                    : (isDark 
-                        ? "border-white/10 bg-white/5" 
-                        : "border-gray-300 bg-gray-50")
-                }`}
-              >
-                <div className="w-2.5 h-2.5 rounded-full bg-green-400 flex-shrink-0 shadow-[0_0_8px_#4ade80]" />
-                <input
-                  value={pickup}
-                  onChange={handlePickupChange}
-                  onFocus={() => {
-                    setActiveField("pickup");
-                    setPanelOpen(true);
-                  }}
-                  onBlur={() =>
-                    setTimeout(() => {
-                      setPanelOpen(false);
-                      setActiveField(null);
-                    }, 200)
-                  }
-                  className={`bg-transparent outline-none flex-1 text-sm ${
-                    isDark 
-                      ? 'text-white placeholder-gray-500' 
-                      : 'text-gray-900 placeholder-gray-500'
-                  }`}
-                  placeholder="Pickup location"
-                />
-                <button
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    useCurrentLocation();
-                  }}
-                  className={`flex-shrink-0 px-2 -mx-2 py-1 cursor-pointer rounded-xl flex items-center justify-center gap-1.5 transition active:scale-90 ${
-                    locLoading
-                      ? "bg-amber-500/20 border border-amber-500/30"
-                      : (isDark 
-                          ? "bg-white/5 hover:bg-amber-500/20 border border-white/10 hover:border-amber-500/30" 
-                          : "bg-gray-100 hover:bg-amber-100 border border-gray-200 hover:border-amber-300")
-                  }`}
-                  title="Use current location"
-                >
-                  {locLoading ? (
-                    <div className="w-3.5 h-3.5 border-2 border-amber-400/40 border-t-amber-400 rounded-full animate-spin" />
-                  ) : (
-                    <i className="ri-focus-3-line text-amber-500 text-sm"></i>
-                  )}
-                </button>
-                {pickup && (
-                  <button
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setPickup("");
-                      setFare(null);
-                      setPickupSuggestions([]);
-                    }}
-                    className={`flex-shrink-0 transition ${
-                      isDark ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-gray-600'
-                    }`}
-                  >
-                    <i className="ri-close-line text-sm"></i>
-                  </button>
-                )}
-              </div>
-
-              {panelOpen &&
-                activeField === "pickup" &&
-                pickupSuggestions.length > 0 && (
-                  <div className={`absolute left-0 right-0 top-[calc(100%+6px)] border rounded-2xl shadow-2xl z-50 overflow-hidden max-h-52 overflow-y-auto animate-fadeIn ${
-                    isDark ? 'bg-zinc-800 border-white/10' : 'bg-white border-gray-200'
-                  }`}>
-                    {pickupSuggestions.map((item, i) => (
-                      <div
-                        key={i}
-                        onMouseDown={() => {
-                          setPickup(item.description);
-                          setPickupSuggestions([]);
-                          setPanelOpen(false);
-                          setFare(null);
-                        }}
-                        className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b last:border-none transition ${
-                          isDark 
-                            ? 'hover:bg-white/8 border-white/5' 
-                            : 'hover:bg-gray-50 border-gray-100'
-                        }`}
-                      >
-                        <div className={`w-7 h-7 rounded-xl border flex items-center justify-center flex-shrink-0 ${
-                          isDark ? 'bg-green-500/10 border-green-500/20' : 'bg-green-50 border-green-200'
-                        }`}>
-                          <i className="ri-map-pin-line text-green-400 text-xs"></i>
-                        </div>
-                        <p className={`text-sm truncate ${
-                          isDark ? 'text-gray-200' : 'text-gray-700'
-                        }`}>
-                          {item.description}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-            </div>
-
-            {/* CONNECTOR */}
-            <div className="flex items-center gap-3 px-4">
-              <div className="flex flex-col items-center gap-1 ml-[1px]">
-                <div className={`w-0.5 h-1.5 rounded ${
-                  isDark ? 'bg-gray-700' : 'bg-gray-400'
-                }`} />
-                <div className={`w-0.5 h-1.5 rounded ${
-                  isDark ? 'bg-gray-700' : 'bg-gray-400'
-                }`} />
-                <div className={`w-0.5 h-1.5 rounded ${
-                  isDark ? 'bg-gray-700' : 'bg-gray-400'
-                }`} />
-              </div>
-            </div>
-
-            {/* DESTINATION */}
-            <div className="relative">
-              <div
-                className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all ${
-                  activeField === "destination"
-                    ? (isDark 
-                        ? "border-red-400/60 bg-red-400/5 shadow-[0_0_0_3px_rgba(248,113,113,0.08)]" 
-                        : "border-red-500 bg-red-50 shadow-[0_0_0_3px_rgba(239,68,68,0.1)]")
-                    : (isDark 
-                        ? "border-white/10 bg-white/5" 
-                        : "border-gray-300 bg-gray-50")
-                }`}
-              >
-                <div className="w-2.5 h-2.5 rounded-full bg-red-400 flex-shrink-0 shadow-[0_0_8px_#f87171]" />
-                <input
-                  value={destination}
-                  onChange={handleDestChange}
-                  onFocus={() => {
-                    setActiveField("destination");
-                    setPanelOpen(true);
-                  }}
-                  onBlur={() =>
-                    setTimeout(() => {
-                      setPanelOpen(false);
-                      setActiveField(null);
-                    }, 200)
-                  }
-                  className={`bg-transparent outline-none flex-1 text-sm ${
-                    isDark 
-                      ? 'text-white placeholder-gray-500' 
-                      : 'text-gray-900 placeholder-gray-500'
-                  }`}
-                  placeholder="Where to?"
-                />
-                {destination && (
-                  <button
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setDestination("");
-                      setFare(null);
-                      setDestSuggestions([]);
-                    }}
-                    className={`flex-shrink-0 transition ${
-                      isDark ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-gray-600'
-                    }`}
-                  >
-                    <i className="ri-close-line text-sm"></i>
-                  </button>
-                )}
-              </div>
-
-              {panelOpen &&
-                activeField === "destination" &&
-                destSuggestions.length > 0 && (
-                  <div className={`absolute left-0 right-0 top-[calc(100%+6px)] border rounded-2xl shadow-2xl z-50 overflow-hidden max-h-52 overflow-y-auto animate-fadeIn ${
-                    isDark ? 'bg-zinc-800 border-white/10' : 'bg-white border-gray-200'
-                  }`}>
-                    {destSuggestions.map((item, i) => (
-                      <div
-                        key={i}
-                        onMouseDown={() => {
-                          setDestination(item.description);
-                          setDestSuggestions([]);
-                          setPanelOpen(false);
-                          setFare(null);
-                        }}
-                        className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b last:border-none transition ${
-                          isDark 
-                            ? 'hover:bg-white/8 border-white/5' 
-                            : 'hover:bg-gray-50 border-gray-100'
-                        }`}
-                      >
-                        <div className={`w-7 h-7 rounded-xl border flex items-center justify-center flex-shrink-0 ${
-                          isDark ? 'bg-red-500/10 border-red-500/20' : 'bg-red-50 border-red-200'
-                        }`}>
-                          <i className="ri-map-pin-2-fill text-red-400 text-xs"></i>
-                        </div>
-                        <p className={`text-sm truncate ${
-                          isDark ? 'text-gray-200' : 'text-gray-700'
-                        }`}>
-                          {item.description}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-            </div>
-
-            {/* ERROR */}
-            {error && (
-              <div className={`flex items-center gap-2 border rounded-xl px-3 py-2.5 ${
-                isDark ? 'bg-red-500/10 border-red-500/20' : 'bg-red-50 border-red-200'
-              }`}>
-                <i className="ri-error-warning-line text-red-400 text-sm flex-shrink-0"></i>
-                <p className="text-red-400 text-xs">{error}</p>
-              </div>
-            )}
-
-            {/* BOOK RIDE BUTTON */}
-            {!fare && (
-              <button
-                onClick={getFare}
-                disabled={loading || !pickup || !destination}
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl transition active:scale-95 shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2 text-base mt-1"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Calculating fare...
-                  </>
-                ) : (
-                  <>
-                    <i className="ri-taxi-line text-lg"></i>Book a Ride
-                  </>
-                )}
-              </button>
-            )}
+          <div className="px-5 py-4">
+            {bookingFormContent}
           </div>
         </div>
-
-        {/* VEHICLE SELECTION */}
-        {fare && (
-          <div className="animate-fadeIn">
-            <div className="flex items-center justify-between mb-3 px-1">
-              <h3 className={`font-black text-lg ${
-                isDark ? 'text-white' : 'text-gray-900'
-              }`}>Choose Vehicle</h3>
-              <button
-                onClick={() => setFare(null)}
-                className={`flex items-center gap-1 text-sm transition ${
-                  isDark ? 'text-gray-500 hover:text-white' : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <i className="ri-arrow-left-line text-xs"></i> Change
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {Object.entries(vehicleLabels).map(([type, info]) => (
-                <div
-                  key={type}
-                  onClick={() => handleVehicleSelect(type)}
-                  className={`flex items-center justify-between border rounded-2xl px-4 py-4 cursor-pointer transition active:scale-[0.98] shadow-lg ${
-                    isDark 
-                      ? 'bg-zinc-900 border-white/10 hover:border-amber-500/50 hover:bg-amber-500/5' 
-                      : 'bg-white border-gray-200 hover:border-amber-400 hover:bg-amber-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-12 flex items-center justify-center">
-                      <img
-                        src={vehicleImages[type]}
-                        alt={type}
-                        className="h-11 w-14 object-contain"
-                      />
-                    </div>
-                    <div>
-                      <p className={`font-bold text-sm ${
-                        isDark ? 'text-white' : 'text-gray-900'
-                      }`}>
-                        {info.emoji} {info.name}
-                      </p>
-                      <p className={`text-xs ${
-                        isDark ? 'text-gray-500' : 'text-gray-600'
-                      }`}>{info.desc}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-amber-400 font-black text-xl">
-                      ₹{fare[type]}
-                    </p>
-                    <p className={`text-xs ${
-                      isDark ? 'text-gray-600' : 'text-gray-500'
-                    }`}>Estimated</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* ROUTE SUMMARY */}
-            <div className={`mt-3 border rounded-2xl p-4 transition-colors duration-300 ${
-              isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-gray-200'
-            }`}>
-              <p className={`text-xs font-semibold uppercase tracking-wider mb-3 ${
-                isDark ? 'text-gray-500' : 'text-gray-600'
-              }`}>
-                Route
-              </p>
-              <div className="flex items-start gap-3 mb-2">
-                <div className="w-2 h-2 rounded-full bg-green-400 mt-1.5 flex-shrink-0 shadow-[0_0_4px_#4ade80]" />
-                <p className={`text-sm leading-relaxed ${
-                  isDark ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  {pickup}
-                </p>
-              </div>
-              <div className="w-0.5 h-4 bg-gradient-to-b from-green-400/30 to-red-400/30 ml-[3px] mb-2" />
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 flex-shrink-0 shadow-[0_0_4px_#f87171]" />
-                <p className={`text-sm leading-relaxed ${
-                  isDark ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  {destination}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── BOTTOM NAV ── */}
@@ -951,6 +825,7 @@ const BookRide = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 
